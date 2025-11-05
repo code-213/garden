@@ -46,7 +46,9 @@ export class ReportFireUseCase {
       reportedDate: new Date(),
       updatedDate: new Date(),
       images: dto.images || [],
-      affectedAreaSqm: dto.affectedAreaSqm
+      affectedAreaSqm: dto.affectedAreaSqm,
+      createdAt: new Date(),
+      updatedAt: new Date()
     };
 
     const fire = Fire.create(fireProps);
