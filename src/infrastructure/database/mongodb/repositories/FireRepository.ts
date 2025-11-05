@@ -66,6 +66,7 @@ export class FireRepository implements IFireRepository {
 
   private toDomain(doc: IFireDocument): Fire {
     const props: FireProps = {
+      _id: doc._id.toString(),
       reportedBy: doc.reportedBy,
       location: Location.create(doc.location),
       severity: doc.severity,
@@ -77,7 +78,9 @@ export class FireRepository implements IFireRepository {
       affectedAreaSqm: doc.affectedAreaSqm,
       responseTeam: doc.responseTeam,
       resolvedDate: doc.resolvedDate,
-      notes: doc.notes
+      notes: doc.notes,
+      createdAt: doc.createdAt,
+      updatedAt: doc.updatedAt
     };
     return Fire.create(props, doc._id.toString());
   }

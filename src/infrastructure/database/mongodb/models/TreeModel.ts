@@ -1,6 +1,7 @@
 import mongoose, { Schema, Document } from 'mongoose';
 
 export interface ITreeDocument extends Document {
+  _id: string;
   species: string;
   plantedBy: string;
   plantedDate: Date;

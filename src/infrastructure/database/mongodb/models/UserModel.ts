@@ -1,6 +1,7 @@
 import mongoose, { Schema, Document } from 'mongoose';
 
 export interface IUserDocument extends Document {
+  _id: string;
   email: string;
   name: string;
   bio?: string;

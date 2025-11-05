@@ -1,6 +1,7 @@
 import mongoose, { Schema, Document } from 'mongoose';
 
 export interface IFireDocument extends Document {
+  _id: string;
   reportedBy: string;
   location: {
     lat: number;
@@ -17,6 +18,8 @@ export interface IFireDocument extends Document {
   responseTeam?: string;
   resolvedDate?: Date;
   notes?: string;
+  createdAt: Date;
+  updatedAt: Date;
 }
 
 const FireSchema = new Schema<IFireDocument>(
@@ -44,7 +47,9 @@ const FireSchema = new Schema<IFireDocument>(
     affectedAreaSqm: { type: Number, min: 0 },
     responseTeam: { type: String },
     resolvedDate: { type: Date },
-    notes: { type: String }
+    notes: { type: String },
+    createdAt: { type: Date, required: true, default: Date.now },
+    updatedAt: { type: Date, required: true, default: Date.now }
   },
   {
     collection: 'fires'

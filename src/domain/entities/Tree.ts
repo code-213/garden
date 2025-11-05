@@ -3,6 +3,7 @@ import { Location } from '../value-objects/Location';
 import { TreeStatus } from '../value-objects/TreeStatus';
 
 export interface TreeProps {
+  _id: string;
   species: string;
   plantedBy: string; // User ID
   plantedDate: Date;
@@ -66,6 +67,10 @@ export class Tree extends Entity<TreeProps> {
     return this.props.image;
   }
 
+  get notes(): string | undefined {
+    return this.props.notes;
+  }
+
   get ageDays(): number {
     const now = new Date();
     const diffTime = Math.abs(now.getTime() - this.props.plantedDate.getTime());
@@ -76,9 +81,9 @@ export class Tree extends Entity<TreeProps> {
   public water(userId: string): void {
     // Check cooldown
     if (this.props.lastWatered) {
-      const hoursSinceLastWater = 
+      const hoursSinceLastWater =
         (new Date().getTime() - this.props.lastWatered.getTime()) / (1000 * 60 * 60);
-      
+
       if (hoursSinceLastWater < Tree.WATER_COOLDOWN_HOURS) {
         const remainingHours = Math.ceil(Tree.WATER_COOLDOWN_HOURS - hoursSinceLastWater);
         throw new Error(`Tree was recently watered. Please wait ${remainingHours} hours.`);
@@ -130,10 +135,10 @@ export class Tree extends Entity<TreeProps> {
 
   public canBeWatered(): boolean {
     if (!this.props.lastWatered) return true;
-    
-    const hoursSinceLastWater = 
+
+    const hoursSinceLastWater =
       (new Date().getTime() - this.props.lastWatered.getTime()) / (1000 * 60 * 60);
-    
+
     return hoursSinceLastWater >= Tree.WATER_COOLDOWN_HOURS;
   }
 
