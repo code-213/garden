@@ -67,7 +67,6 @@ export class TreeRepository implements ITreeRepository {
 
   private toDomain(doc: ITreeDocument): Tree {
     const props: TreeProps = {
-      _id: doc._id.toString(),
       species: doc.species,
       plantedBy: doc.plantedBy,
       plantedDate: doc.plantedDate,
@@ -83,6 +82,7 @@ export class TreeRepository implements ITreeRepository {
     };
     return Tree.create(props, doc._id.toString());
   }
+
   private toPersistence(tree: Tree): any {
     return {
       species: tree.species,

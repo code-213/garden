@@ -3,7 +3,6 @@ import { Location } from '../value-objects/Location';
 import { TreeStatus } from '../value-objects/TreeStatus';
 
 export interface TreeProps {
-  _id: string;
   species: string;
   plantedBy: string; // User ID
   plantedDate: Date;

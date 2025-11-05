@@ -5,7 +5,6 @@ export type FireSeverity = 'low' | 'medium' | 'high' | 'critical';
 export type FireStatus = 'pending' | 'investigating' | 'resolved' | 'false_alarm';
 
 export interface FireProps {
-  _id: string;
   reportedBy: string; // User ID
   location: Location;
   severity: FireSeverity;
