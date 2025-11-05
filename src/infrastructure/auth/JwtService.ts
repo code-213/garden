@@ -1,4 +1,3 @@
-// src/infrastructure/auth/JwtService.ts
 import jwt from 'jsonwebtoken';
 import { IAuthService, GoogleUserData, TokenPair } from '@application/interfaces/IAuthService';
 import { User } from '@domain/entities/User';
@@ -9,8 +8,8 @@ import { GoogleAuthService } from './GoogleAuthService';
 export class JwtService implements IAuthService {
   private readonly accessTokenSecret: string;
   private readonly refreshTokenSecret: string;
-  private readonly accessTokenExpiry: string;
-  private readonly refreshTokenExpiry: string;
+  private readonly accessTokenExpiry: string | number;
+  private readonly refreshTokenExpiry: string | number;
   private readonly googleAuthService: GoogleAuthService;
 
   constructor() {
@@ -38,11 +37,11 @@ export class JwtService implements IAuthService {
 
     const accessToken = jwt.sign(payload, this.accessTokenSecret, {
       expiresIn: this.accessTokenExpiry
-    });
+    } as jwt.SignOptions);
 
     const refreshToken = jwt.sign({ userId: user.id }, this.refreshTokenSecret, {
       expiresIn: this.refreshTokenExpiry
-    });
+    } as jwt.SignOptions);
 
     return {
       accessToken,
@@ -59,7 +58,7 @@ export class JwtService implements IAuthService {
 
       const accessToken = jwt.sign({ userId: decoded.userId }, this.accessTokenSecret, {
         expiresIn: this.accessTokenExpiry
-      });
+      } as jwt.SignOptions);
 
       return { accessToken, expiresIn: 1800 };
     } catch (error) {
