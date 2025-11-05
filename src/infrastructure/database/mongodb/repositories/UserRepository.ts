@@ -1,10 +1,12 @@
-import { Injectable } from '@nestjs/common';
-import { IUserRepository, UserFilters, PaginatedResult } from '@domain/repositories/IUserRepository';
+import {
+  IUserRepository,
+  UserFilters,
+  PaginatedResult
+} from '@domain/repositories/IUserRepository';
 import { User, UserProps } from '@domain/entities/User';
 import { UserModel, IUserDocument } from '../models/UserModel';
 import { Email } from '@domain/value-objects/Email';
 
-@Injectable()
 export class UserRepository implements IUserRepository {
   async findById(id: string): Promise<User | null> {
     const doc = await UserModel.findById(id);
@@ -30,11 +32,10 @@ export class UserRepository implements IUserRepository {
 
   async update(user: User): Promise<User> {
     const userData = this.toPersistence(user);
-    const doc = await UserModel.findByIdAndUpdate(
-      user.id,
-      userData,
-      { new: true, runValidators: true }
-    );
+    const doc = await UserModel.findByIdAndUpdate(user.id, userData, {
+      new: true,
+      runValidators: true
+    });
     if (!doc) throw new Error('User not found');
     return this.toDomain(doc);
   }

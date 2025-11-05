@@ -1,4 +1,5 @@
 import { Tree } from '../entities/Tree';
+import { PaginatedResult } from './IUserRepository';
 
 export interface ITreeRepository {
   findById(id: string): Promise<Tree | null>;

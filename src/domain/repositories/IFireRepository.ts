@@ -1,4 +1,5 @@
 import { Fire } from '../entities/Fire';
+import { PaginatedResult } from './IUserRepository';
 
 export interface IFireRepository {
   findById(id: string): Promise<Fire | null>;
