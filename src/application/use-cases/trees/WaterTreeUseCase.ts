@@ -24,7 +24,8 @@ export class WaterTreeUseCase {
     }
 
     // Water the tree (domain logic)
-    tree.water(dto.userId);
+    // tree.water(dto.userId);
+    tree.water();
 
     // Save changes
     return await this.treeRepository.update(tree);

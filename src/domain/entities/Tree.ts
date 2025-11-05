@@ -77,7 +77,8 @@ export class Tree extends Entity<TreeProps> {
   }
 
   // Business Methods
-  public water(userId: string): void {
+  //public water(userId: string): void {
+  public water(): void {
     // Check cooldown
     if (this.props.lastWatered) {
       const hoursSinceLastWater =
