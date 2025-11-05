@@ -16,12 +16,14 @@ export interface IUserDocument extends Document {
 
 const UserSchema = new Schema<IUserDocument>(
   {
-    email: { type: String, required: true, unique: true, lowercase: true },
+    // Remove 'unique: true' from here since we're adding indexes separately
+    email: { type: String, required: true, lowercase: true },
     name: { type: String, required: true },
     bio: { type: String },
     avatar: { type: String },
     location: { type: String },
-    googleId: { type: String, required: true, unique: true },
+    // Remove 'unique: true' from here since we're adding indexes separately
+    googleId: { type: String, required: true },
     role: { type: String, enum: ['user', 'admin'], default: 'user' },
     status: { type: String, enum: ['active', 'suspended', 'banned'], default: 'active' }
   },
@@ -31,9 +33,9 @@ const UserSchema = new Schema<IUserDocument>(
   }
 );
 
-// Indexes
-UserSchema.index({ email: 1 });
-UserSchema.index({ googleId: 1 });
+// Indexes - unique indexes are defined here only
+UserSchema.index({ email: 1 }, { unique: true });
+UserSchema.index({ googleId: 1 }, { unique: true });
 UserSchema.index({ status: 1 });
 
 export const UserModel = mongoose.model<IUserDocument>('User', UserSchema);
