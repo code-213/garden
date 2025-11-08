@@ -3,6 +3,7 @@ import { PlantTreeUseCase } from '@application/use-cases/trees/PlantTreeUseCase'
 import { WaterTreeUseCase } from '@application/use-cases/trees/WaterTreeUseCase';
 import { GetTreesUseCase } from '@application/use-cases/trees/GetTreesUseCase';
 import { successResponse } from '@shared/utils/response';
+import { TreeMapper } from '@application/mappers/TreeMapper';
 
 export class TreeController {
   constructor(
@@ -13,7 +14,7 @@ export class TreeController {
 
   async plantTree(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
-      const userId = req.user!.id; // From auth middleware
+      const userId = req.user!.id;
       const { species, location, image, notes } = req.body;
 
       const tree = await this.plantTreeUseCase.execute({
@@ -24,7 +25,10 @@ export class TreeController {
         notes
       });
 
-      res.status(201).json(successResponse(tree, 'Tree planted successfully'));
+      // ✅ Transform to DTO
+      const treeDTO = TreeMapper.toDTO(tree);
+
+      res.status(201).json(successResponse(treeDTO, 'Tree planted successfully'));
     } catch (error) {
       next(error);
     }
@@ -42,15 +46,20 @@ export class TreeController {
         limit: limit ? parseInt(limit as string) : undefined
       });
 
-      res.json(successResponse({
-        trees: result.items,
-        pagination: {
-          page: result.page,
-          limit: result.limit,
-          total: result.total,
-          total_pages: result.totalPages
-        }
-      }));
+      // ✅ Transform all trees to DTOs
+      const treesDTO = TreeMapper.toListDTO(result.items);
+
+      res.json(
+        successResponse({
+          trees: treesDTO,
+          pagination: {
+            page: result.page,
+            limit: result.limit,
+            total: result.total,
+            total_pages: result.totalPages
+          }
+        })
+      );
     } catch (error) {
       next(error);
     }
@@ -68,12 +77,18 @@ export class TreeController {
         notes
       });
 
-      res.json(successResponse({
-        tree_id: tree.id,
-        water_count: tree.waterCount,
-        last_watered: tree.lastWatered,
-        status: tree.status
-      }, 'Tree watered successfully'));
+      // ✅ Use camelCase (not snake_case)
+      res.json(
+        successResponse(
+          {
+            id: tree.id,
+            waterCount: tree.waterCount,
+            lastWatered: tree.lastWatered?.toISOString() || null,
+            status: tree.status
+          },
+          'Tree watered successfully'
+        )
+      );
     } catch (error) {
       next(error);
     }

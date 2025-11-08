@@ -46,6 +46,13 @@ export class Tree extends Entity<TreeProps> {
     return this.props.location;
   }
 
+  get createdAt(): Date {
+    return this.props.createdAt;
+  }
+
+  get updatedAt(): Date {
+    return this.props.updatedAt;
+  }
   get status(): TreeStatus {
     return this.props.status;
   }

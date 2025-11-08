@@ -2,6 +2,7 @@ import { Request, Response, NextFunction } from 'express';
 import { ReportFireUseCase } from '@application/use-cases/fires/ReportFireUseCase';
 import { GetFiresUseCase } from '@application/use-cases/fires/GetFiresUseCase';
 import { successResponse } from '@shared/utils/response';
+import { FireMapper } from '@application/mappers/FireMapper';
 
 export class FireController {
   constructor(
@@ -23,7 +24,10 @@ export class FireController {
         affectedAreaSqm
       });
 
-      res.status(201).json(successResponse(fire, 'Fire reported successfully'));
+      // ✅ Transform to DTO with all fields
+      const fireDTO = FireMapper.toDTO(fire);
+
+      res.status(201).json(successResponse(fireDTO, 'Fire reported successfully'));
     } catch (error) {
       next(error);
     }
@@ -40,15 +44,20 @@ export class FireController {
         limit: limit ? parseInt(limit as string) : undefined
       });
 
-      res.json(successResponse({
-        reports: result.items,
-        pagination: {
-          page: result.page,
-          limit: result.limit,
-          total: result.total,
-          total_pages: result.totalPages
-        }
-      }));
+      // ✅ Transform all fires to DTOs
+      const firesDTO = FireMapper.toListDTO(result.items);
+
+      res.json(
+        successResponse({
+          reports: firesDTO,
+          pagination: {
+            page: result.page,
+            limit: result.limit,
+            total: result.total,
+            total_pages: result.totalPages
+          }
+        })
+      );
     } catch (error) {
       next(error);
     }

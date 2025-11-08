@@ -18,7 +18,6 @@ import { UserRepository } from '@infrastructure/database/mongodb/repositories/Us
 import { TreeRepository } from '@infrastructure/database/mongodb/repositories/TreeRepository';
 import { FireRepository } from '@infrastructure/database/mongodb/repositories/FireRepository';
 import { JwtService } from '@infrastructure/auth/JwtService';
-import { GoogleAuthService } from '@infrastructure/auth/GoogleAuthService';
 
 // Import use cases
 import { GoogleLoginUseCase } from '@application/use-cases/auth/GoogleLoginUseCase';
@@ -30,6 +29,13 @@ import { ReportFireUseCase } from '@application/use-cases/fires/ReportFireUseCas
 import { GetFiresUseCase } from '@application/use-cases/fires/GetFiresUseCase';
 import { GetUserProfileUseCase } from '@application/use-cases/users/GetUserProfileUseCase';
 import { UpdateUserProfileUseCase } from '@application/use-cases/users/UpdateUserProfileUseCase';
+
+import { GetLeaderboardUseCase } from '@application/use-cases/leaderboard/GetLeaderboardUseCase';
+import { LeaderboardController } from '@presentation/http/controllers/LeaderboardController';
+import { GetUserStatsUseCase } from '@application/use-cases/users/GetUserStatsUseCase';
+
+import { CommentRepository } from '@infrastructure/database/mongodb/repositories/CommentRepository';
+import { CommentController } from '@presentation/http/controllers/CommentController';
 
 import {
   createAuthMiddleware,
@@ -66,7 +72,6 @@ export function createApp(): Application {
 
   // Initialize services
   const jwtService = new JwtService();
-  const googleAuthService = new GoogleAuthService();
 
   // Setup auth middleware
   const authMiddleware = createAuthMiddleware(jwtService, userRepository);
@@ -82,19 +87,42 @@ export function createApp(): Application {
   const getFiresUseCase = new GetFiresUseCase(fireRepository);
   const getUserProfileUseCase = new GetUserProfileUseCase(userRepository);
   const updateUserProfileUseCase = new UpdateUserProfileUseCase(userRepository);
+  const getUserStatsUseCase = new GetUserStatsUseCase(
+    userRepository,
+    treeRepository,
+    fireRepository
+  );
+
+  // Initialize
+  const commentRepository = new CommentRepository();
+  const commentController = new CommentController(commentRepository);
 
   // Initialize controllers
   const authController = new AuthController(googleLoginUseCase, refreshTokenUseCase);
   const treeController = new TreeController(plantTreeUseCase, waterTreeUseCase, getTreesUseCase);
   const fireController = new FireController(reportFireUseCase, getFiresUseCase);
-  const userController = new UserController(getUserProfileUseCase, updateUserProfileUseCase);
+  const userController = new UserController(
+    getUserProfileUseCase,
+    updateUserProfileUseCase,
+    getUserStatsUseCase
+  );
+
+  const getLeaderboardUseCase = new GetLeaderboardUseCase(
+    treeRepository,
+    fireRepository,
+    userRepository
+  );
+
+  const leaderboardController = new LeaderboardController(getLeaderboardUseCase);
 
   // Setup routes
   setupRoutes(app, {
     auth: authController,
     tree: treeController,
     fire: fireController,
-    user: userController
+    user: userController,
+    leaderboard: leaderboardController, // ✅ Add this
+    comment: commentController
   });
 
   // Error handler (must be last)

@@ -3,24 +3,23 @@ import { TreeController } from '../controllers/TreeController';
 import { authMiddleware } from '../middlewares/auth.middleware';
 import { validateRequest } from '../middlewares/validation.middleware';
 import { plantTreeValidator, waterTreeValidator } from '../validators/tree.validator';
+import { plantTreeRateLimit } from '../middlewares/rateLimit.middleware'; // ✅ Import
 
 export function createTreeRoutes(treeController: TreeController): Router {
   const router = Router();
 
-  // All routes require authentication
   router.use(authMiddleware);
 
-  // GET /trees - Get all trees
   router.get('/', treeController.getTrees.bind(treeController));
 
-  // POST /trees - Plant a new tree
+  // ✅ Add rate limiting
   router.post(
     '/',
+    plantTreeRateLimit, // ✅ Add this middleware
     validateRequest(plantTreeValidator),
     treeController.plantTree.bind(treeController)
   );
 
-  // POST /trees/:treeId/water - Water a tree
   router.post(
     '/:treeId/water',
     validateRequest(waterTreeValidator),

@@ -35,6 +35,18 @@ export class Fire extends Entity<FireProps> {
     return this.props.reportedBy;
   }
 
+  get notes(): string | undefined {
+    return this.props.notes;
+  }
+
+  get createdAt(): Date {
+    return this.props.createdAt;
+  }
+
+  get updatedAt(): Date {
+    return this.props.updatedAt;
+  }
+
   get location(): Location {
     return this.props.location;
   }

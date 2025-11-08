@@ -11,6 +11,9 @@ export function createUserRoutes(userController: UserController): Router {
 
   router.get('/:userId', userController.getProfile.bind(userController));
 
+  // ✅ Add stats endpoint
+  router.get('/:userId/stats', userController.getUserStats.bind(userController));
+
   router.put(
     '/:userId',
     validateRequest(updateUserValidator),
