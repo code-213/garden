@@ -25,7 +25,8 @@
       "@presentation/*": ["presentation/*"],
       "@shared/*": ["shared/*"],
       "@config/*": ["config/*"]
-    }
+    },
+    "typeRoots": ["./node_modules/@types", "./src/@types"]
   },
   "include": ["src/**/*"],
   "exclude": ["node_modules", "dist", "tests", "**/*.spec.ts", "**/*.test.ts"]
