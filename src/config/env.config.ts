@@ -1,8 +1,6 @@
 import dotenv from 'dotenv';
 
-import path from 'path';
-
-dotenv.config({ path: path.resolve(__dirname, '../../.env') });
+dotenv.config();
 
 export const config = {
   app: {
@@ -30,7 +28,7 @@ export const config = {
     apiSecret: process.env.CLOUDINARY_API_SECRET || ''
   },
   cors: {
-    origin: process.env.CORS_ORIGIN || 'http://localhost:3000',
+    origin: process.env.CORS_ORIGIN || 'http://localhost:8080',
     credentials: true
   }
 };
