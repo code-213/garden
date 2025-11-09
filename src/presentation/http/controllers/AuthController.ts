@@ -9,6 +9,7 @@ import { LoginUseCase } from '@application/use-cases/auth/LoginUseCase';
 import { LogoutUseCase } from '@application/use-cases/auth/LogoutUseCase';
 import { successResponse } from '@shared/utils/response';
 import { logger } from '@shared/utils/logger';
+import { AuthRequest } from '@presentation/http/middlewares/auth.middleware';
 
 export class AuthController {
   constructor(
@@ -158,7 +159,7 @@ export class AuthController {
    * GET /auth/me
    * Get current authenticated user
    */
-  async getCurrentUser(req: Request, res: Response, next: NextFunction): Promise<void> {
+  async getCurrentUser(req: AuthRequest, res: Response, next: NextFunction): Promise<void> {
     try {
       const user = req.user!;
 
@@ -167,9 +168,6 @@ export class AuthController {
           id: user.id,
           email: user.email,
           name: user.name,
-          bio: user.bio || null,
-          avatar: user.avatar || null,
-          location: user.location || null,
           joined_date: user.createdAt,
           role: user.role
         })
@@ -183,7 +181,7 @@ export class AuthController {
    * POST /auth/logout
    * Logout current session
    */
-  async logout(req: Request, res: Response): Promise<void> {
+  async logout(req: AuthRequest, res: Response): Promise<void> {
     try {
       const userId = req.user!.id;
       const { refresh_token } = req.body;
@@ -212,7 +210,7 @@ export class AuthController {
    * POST /auth/logout-all
    * Logout from all devices
    */
-  async logoutAll(req: Request, res: Response, next: NextFunction): Promise<void> {
+  async logoutAll(req: AuthRequest, res: Response, next: NextFunction): Promise<void> {
     try {
       const userId = req.user!.id;
       const accessToken = req.headers.authorization?.substring(7) || '';

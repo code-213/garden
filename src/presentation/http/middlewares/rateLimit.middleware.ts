@@ -36,5 +36,5 @@ export const plantTreeRateLimit = rateLimit({
       message: 'Tree planting limit reached. Please try again later.'
     }
   },
-  keyGenerator: req => req.user?.id || req.ip || 'anonymous'
+  keyGenerator: req => req.ip || 'anonymous'
 });

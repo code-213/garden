@@ -5,6 +5,16 @@ import { ITokenBlacklistService } from '@infrastructure/cache/TokenBlacklistServ
 import { UnauthorizedError } from '@shared/errors';
 import { logger } from '@shared/utils/logger';
 
+export interface AuthRequest extends Request {
+  user: {
+    id: string;
+    email: string;
+    name: string;
+    role: string;
+    createdAt: Date;
+  };
+}
+
 export const createAuthMiddleware = (
   authService: IAuthService,
   userRepository: IUserRepository,
@@ -49,14 +59,11 @@ export const createAuthMiddleware = (
       }
 
       // 5. Attach user to request
-      req.user = {
+      (req as AuthRequest).user = {
         id: user.id,
         email: user.email.getValue(),
         name: user.name,
         role: user.role,
-        avatar: user.avatar,
-        bio: user.bio,
-        location: user.location,
         createdAt: user.createdAt
       };
 
