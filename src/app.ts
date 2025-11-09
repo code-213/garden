@@ -1,3 +1,6 @@
+// src/app.ts
+// UPDATE THIS FILE - Add new dependencies
+
 import express, { Application } from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
@@ -13,15 +16,24 @@ import { TreeController } from '@presentation/http/controllers/TreeController';
 import { FireController } from '@presentation/http/controllers/FireController';
 import { UserController } from '@presentation/http/controllers/UserController';
 
-// Import use cases and dependencies
+// Import repositories
 import { UserRepository } from '@infrastructure/database/mongodb/repositories/UserRepository';
 import { TreeRepository } from '@infrastructure/database/mongodb/repositories/TreeRepository';
 import { FireRepository } from '@infrastructure/database/mongodb/repositories/FireRepository';
+import { RefreshTokenRepository } from '@infrastructure/database/mongodb/repositories/RefreshTokenRepository';
+import { CommentRepository } from '@infrastructure/database/mongodb/repositories/CommentRepository';
+
+// Import services
 import { JwtService } from '@infrastructure/auth/JwtService';
+import { RedisCache } from '@infrastructure/cache/RedisCache';
+import { TokenBlacklistService } from '@infrastructure/cache/TokenBlacklistService';
 
 // Import use cases
 import { GoogleLoginUseCase } from '@application/use-cases/auth/GoogleLoginUseCase';
 import { RefreshTokenUseCase } from '@application/use-cases/auth/RefreshTokenUseCase';
+import { RegisterUseCase } from '@application/use-cases/auth/RegisterUseCase';
+import { LoginUseCase } from '@application/use-cases/auth/LoginUseCase';
+import { LogoutUseCase } from '@application/use-cases/auth/LogoutUseCase';
 import { PlantTreeUseCase } from '@application/use-cases/trees/PlantTreeUseCase';
 import { WaterTreeUseCase } from '@application/use-cases/trees/WaterTreeUseCase';
 import { GetTreesUseCase } from '@application/use-cases/trees/GetTreesUseCase';
@@ -29,12 +41,9 @@ import { ReportFireUseCase } from '@application/use-cases/fires/ReportFireUseCas
 import { GetFiresUseCase } from '@application/use-cases/fires/GetFiresUseCase';
 import { GetUserProfileUseCase } from '@application/use-cases/users/GetUserProfileUseCase';
 import { UpdateUserProfileUseCase } from '@application/use-cases/users/UpdateUserProfileUseCase';
-
 import { GetLeaderboardUseCase } from '@application/use-cases/leaderboard/GetLeaderboardUseCase';
 import { LeaderboardController } from '@presentation/http/controllers/LeaderboardController';
 import { GetUserStatsUseCase } from '@application/use-cases/users/GetUserStatsUseCase';
-
-import { CommentRepository } from '@infrastructure/database/mongodb/repositories/CommentRepository';
 import { CommentController } from '@presentation/http/controllers/CommentController';
 
 import {
@@ -69,17 +78,26 @@ export function createApp(): Application {
   const userRepository = new UserRepository();
   const treeRepository = new TreeRepository();
   const fireRepository = new FireRepository();
+  const refreshTokenRepository = new RefreshTokenRepository();
+  const commentRepository = new CommentRepository();
 
-  // Initialize services
-  const jwtService = new JwtService();
+  // Initialize cache and services
+  const redisCache = new RedisCache();
+  const blacklistService = new TokenBlacklistService(redisCache);
+  const jwtService = new JwtService(refreshTokenRepository, userRepository);
 
-  // Setup auth middleware
-  const authMiddleware = createAuthMiddleware(jwtService, userRepository);
+  // Setup auth middleware with all dependencies
+  const authMiddleware = createAuthMiddleware(jwtService, userRepository, blacklistService);
   setAuthMiddleware(authMiddleware);
 
-  // Initialize use cases
+  // Initialize auth use cases
   const googleLoginUseCase = new GoogleLoginUseCase(userRepository, jwtService);
   const refreshTokenUseCase = new RefreshTokenUseCase(jwtService);
+  const registerUseCase = new RegisterUseCase(userRepository, jwtService);
+  const loginUseCase = new LoginUseCase(userRepository, jwtService);
+  const logoutUseCase = new LogoutUseCase(refreshTokenRepository, blacklistService);
+
+  // Initialize other use cases
   const plantTreeUseCase = new PlantTreeUseCase(treeRepository, userRepository);
   const waterTreeUseCase = new WaterTreeUseCase(treeRepository);
   const getTreesUseCase = new GetTreesUseCase(treeRepository);
@@ -92,13 +110,20 @@ export function createApp(): Application {
     treeRepository,
     fireRepository
   );
-
-  // Initialize
-  const commentRepository = new CommentRepository();
-  const commentController = new CommentController(commentRepository);
+  const getLeaderboardUseCase = new GetLeaderboardUseCase(
+    treeRepository,
+    fireRepository,
+    userRepository
+  );
 
   // Initialize controllers
-  const authController = new AuthController(googleLoginUseCase, refreshTokenUseCase);
+  const authController = new AuthController(
+    googleLoginUseCase,
+    refreshTokenUseCase,
+    registerUseCase,
+    loginUseCase,
+    logoutUseCase
+  );
   const treeController = new TreeController(plantTreeUseCase, waterTreeUseCase, getTreesUseCase);
   const fireController = new FireController(reportFireUseCase, getFiresUseCase);
   const userController = new UserController(
@@ -106,14 +131,8 @@ export function createApp(): Application {
     updateUserProfileUseCase,
     getUserStatsUseCase
   );
-
-  const getLeaderboardUseCase = new GetLeaderboardUseCase(
-    treeRepository,
-    fireRepository,
-    userRepository
-  );
-
   const leaderboardController = new LeaderboardController(getLeaderboardUseCase);
+  const commentController = new CommentController(commentRepository);
 
   // Setup routes
   setupRoutes(app, {
@@ -121,7 +140,7 @@ export function createApp(): Application {
     tree: treeController,
     fire: fireController,
     user: userController,
-    leaderboard: leaderboardController, // ✅ Add this
+    leaderboard: leaderboardController,
     comment: commentController
   });
 

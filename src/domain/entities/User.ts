@@ -1,5 +1,9 @@
+// src/domain/entities/User.ts
+// UPDATE THIS FILE - Add password support
+
 import { Entity } from './base/Entity';
 import { Email } from '../value-objects/Email';
+import { Password } from '../value-objects/Password';
 
 export interface UserProps {
   email: Email;
@@ -7,7 +11,9 @@ export interface UserProps {
   bio?: string;
   avatar?: string;
   location?: string;
-  googleId: string;
+  googleId: string; // Empty string for email/password users
+  password?: Password; // Optional - only for email/password auth
+  emailVerified?: boolean; // Track if email is verified
   role: 'user' | 'admin';
   status: 'active' | 'suspended' | 'banned';
   createdAt: Date;
@@ -48,6 +54,14 @@ export class User extends Entity<UserProps> {
     return this.props.googleId;
   }
 
+  get password(): Password | undefined {
+    return this.props.password;
+  }
+
+  get emailVerified(): boolean {
+    return this.props.emailVerified || false;
+  }
+
   get role(): 'user' | 'admin' {
     return this.props.role;
   }
@@ -60,12 +74,27 @@ export class User extends Entity<UserProps> {
     return this.props.createdAt;
   }
 
+  get updatedAt(): Date {
+    return this.props.updatedAt;
+  }
+
   // Business Methods
   public updateProfile(name?: string, bio?: string, location?: string, avatar?: string): void {
     if (name) this.props.name = name;
     if (bio !== undefined) this.props.bio = bio;
     if (location !== undefined) this.props.location = location;
     if (avatar) this.props.avatar = avatar;
+    this.props.updatedAt = new Date();
+  }
+
+  public async updatePassword(newPassword: string): Promise<void> {
+    const passwordObj = Password.create(newPassword);
+    this.props.password = await passwordObj.hash();
+    this.props.updatedAt = new Date();
+  }
+
+  public verifyEmail(): void {
+    this.props.emailVerified = true;
     this.props.updatedAt = new Date();
   }
 
@@ -93,5 +122,13 @@ export class User extends Entity<UserProps> {
 
   public isAdmin(): boolean {
     return this.props.role === 'admin';
+  }
+
+  public isGoogleUser(): boolean {
+    return this.props.googleId !== '';
+  }
+
+  public isEmailPasswordUser(): boolean {
+    return this.props.password !== undefined;
   }
 }

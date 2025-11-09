@@ -1,3 +1,6 @@
+// src/infrastructure/database/mongodb/repositories/UserRepository.ts
+// UPDATE THIS FILE - Handle password field
+
 import {
   IUserRepository,
   UserFilters,
@@ -6,15 +9,30 @@ import {
 import { User, UserProps } from '@domain/entities/User';
 import { UserModel, IUserDocument } from '../models/UserModel';
 import { Email } from '@domain/value-objects/Email';
+import { Password } from '@domain/value-objects/Password';
 
 export class UserRepository implements IUserRepository {
-  async findById(id: string): Promise<User | null> {
-    const doc = await UserModel.findById(id);
+  async findById(id: string, includePassword: boolean = false): Promise<User | null> {
+    let query = UserModel.findById(id);
+
+    // Include password if needed (for login verification)
+    if (includePassword) {
+      query = query.select('+password');
+    }
+
+    const doc = await query;
     return doc ? this.toDomain(doc) : null;
   }
 
-  async findByEmail(email: string): Promise<User | null> {
-    const doc = await UserModel.findOne({ email: email.toLowerCase() });
+  async findByEmail(email: string, includePassword: boolean = false): Promise<User | null> {
+    let query = UserModel.findOne({ email: email.toLowerCase() });
+
+    // Include password if needed (for login verification)
+    if (includePassword) {
+      query = query.select('+password');
+    }
+
+    const doc = await query;
     return doc ? this.toDomain(doc) : null;
   }
 
@@ -79,7 +97,9 @@ export class UserRepository implements IUserRepository {
       bio: doc.bio,
       avatar: doc.avatar,
       location: doc.location,
-      googleId: doc.googleId,
+      googleId: doc.googleId || '',
+      password: doc.password ? Password.createHashed(doc.password) : undefined,
+      emailVerified: doc.emailVerified,
       role: doc.role,
       status: doc.status,
       createdAt: doc.createdAt,
@@ -89,17 +109,26 @@ export class UserRepository implements IUserRepository {
   }
 
   private toPersistence(user: User): any {
-    return {
+    const data: any = {
       _id: user.id,
       email: user.email.getValue(),
       name: user.name,
       bio: user.bio,
       avatar: user.avatar,
       location: user.location,
-      googleId: user.googleId,
+      googleId: user.googleId || '',
+      emailVerified: user.emailVerified,
       role: user.role,
       status: user.status,
-      createdAt: user.createdAt
+      createdAt: user.createdAt,
+      updatedAt: user.updatedAt
     };
+
+    // Only include password if it exists
+    if (user.password) {
+      data.password = user.password.getValue();
+    }
+
+    return data;
   }
 }
