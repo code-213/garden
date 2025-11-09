@@ -19,20 +19,23 @@ export class AuthController {
 
       const result = await this.googleLoginUseCase.execute({ code });
 
-      res.json(successResponse({
-        user: {
-          id: result.user.id,
-          email: result.user.email.getValue(),
-          name: result.user.name,
-          avatar: result.user.avatar,
-          bio: result.user.bio,
-          location: result.user.location,
-          created_at: result.user.createdAt
-        },
-        access_token: result.accessToken,
-        refresh_token: result.refreshToken,
-        expires_in: result.expiresIn
-      }));
+      res.json(
+        successResponse({
+          user: {
+            id: result.user.id,
+            email: result.user.email.getValue(),
+            name: result.user.name,
+            avatar: result.user.avatar,
+            bio: result.user.bio,
+            location: result.user.location,
+            role: result.user.role,
+            created_at: result.user.createdAt
+          },
+          access_token: result.accessToken,
+          refresh_token: result.refreshToken,
+          expires_in: result.expiresIn
+        })
+      );
     } catch (error) {
       next(error);
     }
@@ -46,14 +49,18 @@ export class AuthController {
         throw new Error('Refresh token is required');
       }
 
-      const result = await this.refreshTokenUseCase.execute({ 
-        refreshToken: refresh_token 
+      const result = await this.refreshTokenUseCase.execute({
+        refreshToken: refresh_token
       });
 
-      res.json(successResponse({
-        access_token: result.accessToken,
-        expires_in: result.expiresIn
-      }));
+      // ✅ Return both tokens
+      res.json(
+        successResponse({
+          access_token: result.accessToken,
+          refresh_token: result.refreshToken, // Include new refresh token
+          expires_in: result.expiresIn
+        })
+      );
     } catch (error) {
       next(error);
     }
@@ -62,17 +69,19 @@ export class AuthController {
   async getCurrentUser(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
       const user = req.user!;
-      
-      res.json(successResponse({
-        id: user.id,
-        email: user.email,
-        name: user.name,
-        bio: user.bio,
-        avatar: user.avatar,
-        location: user.location,
-        joined_date: user.createdAt,
-        role: user.role
-      }));
+
+      res.json(
+        successResponse({
+          id: user.id,
+          email: user.email,
+          name: user.name,
+          bio: user.bio,
+          avatar: user.avatar,
+          location: user.location,
+          joined_date: user.createdAt,
+          role: user.role
+        })
+      );
     } catch (error) {
       next(error);
     }
@@ -80,7 +89,7 @@ export class AuthController {
 
   async logout(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
-      // Could implement token blacklisting here
+      // In production, add token to blacklist (Redis)
       res.json(successResponse(null, 'Logged out successfully'));
     } catch (error) {
       next(error);

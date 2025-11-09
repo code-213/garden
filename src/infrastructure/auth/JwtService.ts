@@ -5,6 +5,11 @@ import { UnauthorizedError } from '@shared/errors';
 import { config } from '@config/env.config';
 import { GoogleAuthService } from './GoogleAuthService';
 
+interface RefreshTokenPayload {
+  userId: string;
+  tokenVersion?: number; // For token rotation tracking
+}
+
 export class JwtService implements IAuthService {
   private readonly accessTokenSecret: string;
   private readonly refreshTokenSecret: string;
@@ -39,30 +44,62 @@ export class JwtService implements IAuthService {
       expiresIn: this.accessTokenExpiry
     } as jwt.SignOptions);
 
-    const refreshToken = jwt.sign({ userId: user.id }, this.refreshTokenSecret, {
-      expiresIn: this.refreshTokenExpiry
-    } as jwt.SignOptions);
+    // Include timestamp for rotation tracking
+    const refreshToken = jwt.sign(
+      {
+        userId: user.id,
+        tokenVersion: Date.now()
+      } as RefreshTokenPayload,
+      this.refreshTokenSecret,
+      {
+        expiresIn: this.refreshTokenExpiry
+      } as jwt.SignOptions
+    );
 
     return {
       accessToken,
       refreshToken,
-      expiresIn: 1800 // 30 minutes in seconds
+      expiresIn: this.getExpirySeconds(this.accessTokenExpiry)
     };
   }
 
   async refreshAccessToken(
     refreshToken: string
-  ): Promise<{ accessToken: string; expiresIn: number }> {
+  ): Promise<{ accessToken: string; refreshToken: string; expiresIn: number }> {
     try {
-      const decoded = jwt.verify(refreshToken, this.refreshTokenSecret) as { userId: string };
+      // Verify the refresh token
+      const decoded = jwt.verify(refreshToken, this.refreshTokenSecret) as RefreshTokenPayload;
 
+      // Generate new access token
       const accessToken = jwt.sign({ userId: decoded.userId }, this.accessTokenSecret, {
         expiresIn: this.accessTokenExpiry
       } as jwt.SignOptions);
 
-      return { accessToken, expiresIn: 1800 };
+      // ✅ Generate new refresh token (token rotation)
+      const newRefreshToken = jwt.sign(
+        {
+          userId: decoded.userId,
+          tokenVersion: Date.now()
+        } as RefreshTokenPayload,
+        this.refreshTokenSecret,
+        {
+          expiresIn: this.refreshTokenExpiry
+        } as jwt.SignOptions
+      );
+
+      return {
+        accessToken,
+        refreshToken: newRefreshToken, // Return new refresh token
+        expiresIn: this.getExpirySeconds(this.accessTokenExpiry)
+      };
     } catch (error) {
-      throw new UnauthorizedError('Invalid refresh token');
+      if (error instanceof jwt.TokenExpiredError) {
+        throw new UnauthorizedError('Refresh token has expired. Please log in again.');
+      }
+      if (error instanceof jwt.JsonWebTokenError) {
+        throw new UnauthorizedError('Invalid refresh token. Please log in again.');
+      }
+      throw new UnauthorizedError('Token verification failed. Please log in again.');
     }
   }
 
@@ -74,7 +111,33 @@ export class JwtService implements IAuthService {
       };
       return decoded;
     } catch (error) {
-      throw new UnauthorizedError('Invalid or expired access token');
+      if (error instanceof jwt.TokenExpiredError) {
+        throw new UnauthorizedError('Access token has expired');
+      }
+      if (error instanceof jwt.JsonWebTokenError) {
+        throw new UnauthorizedError('Invalid access token');
+      }
+      throw new UnauthorizedError('Token verification failed');
     }
+  }
+
+  private getExpirySeconds(expiry: string | number): number {
+    if (typeof expiry === 'number') return expiry;
+
+    // Parse string like "30m", "7d", "1h"
+    const units: Record<string, number> = {
+      s: 1,
+      m: 60,
+      h: 3600,
+      d: 86400
+    };
+
+    const match = expiry.match(/^(\d+)([smhd])$/);
+    if (match) {
+      const [, value, unit] = match;
+      return parseInt(value) * units[unit];
+    }
+
+    return 1800; // Default to 30 minutes
   }
 }
