@@ -26,8 +26,8 @@ export class CommentController {
             id: c.id,
             content: c.content,
             authorId: c.authorId,
-            createdAt: c.props.createdAt,
-            updatedAt: c.props.updatedAt
+            createdAt: c.createdAt,
+            updatedAt: c.updatedAt
           })),
           total: comments.length
         })
@@ -67,7 +67,7 @@ export class CommentController {
             authorId: savedComment.authorId,
             targetType: savedComment.targetType,
             targetId: savedComment.targetId,
-            createdAt: savedComment.props.createdAt
+            createdAt: savedComment.createdAt
           },
           'Comment created successfully'
         )

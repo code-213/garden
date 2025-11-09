@@ -33,6 +33,13 @@ export class Comment extends Entity<CommentProps> {
   get targetId(): string {
     return this.props.targetId;
   }
+  get createdAt(): Date {
+    return this.props.createdAt;
+  }
+
+  get updatedAt(): Date {
+    return this.props.updatedAt;
+  }
 
   public updateContent(content: string): void {
     if (!content || content.trim().length === 0) {

@@ -19,6 +19,12 @@ async function bootstrap(): Promise<void> {
       logger.info(`🔗 API Version: ${config.app.apiVersion}`);
     });
 
+    // hander error request not found
+    app.use((req, res) => {
+      const err = new Error('Not Found');
+      res.send(err);
+    });
+
     // Graceful shutdown
     process.on('SIGTERM', async () => {
       logger.info('SIGTERM signal received: closing HTTP server');

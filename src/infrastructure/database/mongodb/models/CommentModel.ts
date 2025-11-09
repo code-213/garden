@@ -1,6 +1,7 @@
 import mongoose, { Schema, Document } from 'mongoose';
 
 export interface ICommentDocument extends Document {
+  _id: string;
   content: string;
   authorId: string;
   targetType: 'tree' | 'fire';
